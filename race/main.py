@@ -1,6 +1,7 @@
 import pygame
 import random
 import cars
+import menu
 
 pygame.init()
 WIDTH = 500
@@ -9,7 +10,12 @@ FPS = 120
 
 def random_choice(list):
     a, b = random.choice(list)
-    return random.randint(a, b)   #Первая полоса 30-45 Вторая полоса 140-155  Третья полоса 250- 270  Четвертая полоса 360-385
+    return random.randint(a, b)
+
+def disable():
+    global state
+    main_menu.disable()
+    state = "game"
 
 class Player(cars.Cars):
     def __init__(self):
@@ -48,14 +54,21 @@ class Player(cars.Cars):
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 main = Player()
+main_menu = menu.Menu(screen)
+play = main_menu.add.button("Играть", disable)
+difficulty = main_menu.add.range_slider("Сложность", 1, (1, 2, 3, 4, 5))
+main_menu.add.button("Выход", quit)
 pos = [(30, 35), (140, 155), (250, 270), (360, 385)]
 roads_sprites = ["image/road.jpg", "image/road2.jpg", "image/road3.jpg", "image/road4.jpg"]
+state = "menu"
 run = True
+
 
 while run:
     clock.tick(FPS)
+    events = pygame.event.get()
     keys = pygame.key.get_pressed()
-    for event in pygame.event.get():
+    for event in events:
         if event.type == pygame.QUIT:
             run = False
     road = pygame.image.load(random.choice(roads_sprites))
@@ -71,9 +84,15 @@ while run:
         main.vertical_car_move(-10)
     elif keys[pygame.K_s]:
         main.vertical_car_move(10)
-    main.other_car_move()
+    if state == "game":
+        main.other_car_move()
     if main.main_car.colliderect(main.other_cars):
-        print("авария")
+        state = "menu"
+        main_menu.enable()
+        main.other_cars.y = 0 - 100
+        main.other_cars.x = random_choice(pos)
+        main.speed = 10
+    main_menu.flip2(events)
     pygame.display.flip()
 
 pygame.quit()
